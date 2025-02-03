@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Part Hub</title>
+
+    <!-- External Bootstrap CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+
+    <!-- Link to your custom styles.css -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+
+    <!-- Header Section -->
+    <header>
+        <h1 class="ph_title">Part Hub</h1>
+        <a class="hw_title" href="{{ url_for('hot_wheels') }}">Hot Wheels</a>
+
+    </header>
+
+    <!-- Main Content -->
+    <div class="container mt-5">
+        <!-- Render the table with car listings -->
+        <div>
+            {{ table_html | safe }}
+        </div>
+    </div>
+
+    <!-- Optional Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+

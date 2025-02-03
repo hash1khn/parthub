@@ -1,0 +1,196 @@
+body {
+  font-family: 'Arial', sans-serif;
+  background-color: #f4f4f9;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  line-height: 1.6;
+}
+
+/* Header Styling */
+header {
+  background-color: #333;
+  color: white;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: relative;
+}
+
+.ph_title {
+  font-size: 2em;
+  color: white;
+  text-decoration: none;
+  transition: color 0.3s ease;
+  margin-right: auto;
+}
+
+.ph_title:hover {
+  color: #ff6347;
+}
+
+h1.hw_title {
+  font-size: 2.2em;
+  text-align: center;
+  margin: 0;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* Form Styles */
+h2 {
+  font-size: 28px;
+  color: #333;
+  text-align: center;
+  margin-top: 40px;
+  margin-bottom: 20px;
+}
+
+form {
+  background-color: white;
+  max-width: 500px;
+  margin: 20px auto;
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+label {
+  display: block;
+  font-weight: bold;
+  margin-top: 15px;
+  color: #333;
+}
+
+input {
+  width: 100%;
+  padding: 12px;
+  margin-top: 8px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 16px;
+  box-sizing: border-box;
+}
+
+input:focus {
+  border-color: #28a745;
+  outline: none;
+}
+
+button {
+  background-color: #28a745;
+  color: white;
+  width: 100%;
+  padding: 15px;
+  border: none;
+  border-radius: 6px;
+  font-size: 18px;
+  cursor: pointer;
+  margin-top: 20px;
+  transition: background-color 0.3s;
+}
+
+button:hover {
+  background-color: #218838;
+}
+
+button:active {
+  background-color: #1e7e34;
+}
+
+/* Year Fields Styling */
+.year-field-container {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.year-field-container input {
+  flex: 1;
+  padding: 12px;
+  margin-top: 8px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 16px;
+}
+
+.year-field-container input:focus {
+  border-color: #28a745;
+  outline: none;
+}
+
+/* Stored Data Styling */
+#storedDataContainer {
+  margin-top: 30px;
+  text-align: center;
+}
+
+#storedData {
+  display: flex;
+  flex-direction: column; /* Stack items vertically */
+  justify-content: center;
+  gap: 20px;
+  width: 100%;
+  margin-top: 20px;
+}
+
+.stored-item {
+  display: flex;
+  justify-content: space-between; /* Ensure horizontal layout for each entry */
+  align-items: center;
+  font-size: 16px;
+  background-color: #fff;
+  padding: 15px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  text-align: center;
+  min-width: 200px;
+  margin: 0 auto; /* Center the items */
+}
+
+.stored-item > div {
+  flex: 1; /* Allow equal distribution of the space */
+  text-align: center;
+}
+
+.stored-item > div:first-child {
+  text-align: left;
+}
+
+.stored-item span {
+  padding: 0 10px; /* Space between values */
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  body {
+    padding: 10px;
+  }
+
+  header {
+    padding: 15px;
+  }
+
+  h2 {
+    font-size: 24px;
+  }
+
+  form {
+    padding: 15px;
+  }
+
+  #storedData {
+    width: 100%;
+  }
+
+  .stored-item {
+    min-width: 120px;
+    flex-direction: column; /* Stack vertically on smaller screens */
+  }
+
+  .stored-item > div {
+    text-align: left;
+  }
+}

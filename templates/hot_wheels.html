@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hot Wheels - Part Hub</title>
+    <link rel="stylesheet" href="/static/css/styles2.css"> <!-- Link to the updated CSS -->
+  </head>
+  <body>
+    <!-- Header Section -->
+    <header>
+      <div class="header-left">
+        <!-- Update this link to use Flask's `url_for()` to navigate back to the homepage -->
+        <a class="ph_title" href="index.html">Part Hub</a>
+      </div>
+      <h1 class="hw_title">Hot Wheels</h1>
+    </header>
+
+    <!-- Car Filter Form -->
+    <h2>Create a List of Hot Wheels</h2>
+    <form id="carFilterForm">
+      <label for="make">Make:</label>
+      <input list="make-options" id="make" name="make" placeholder="Enter car make" autocomplete="on">
+      <datalist id="make-options">
+        <!-- Car make options -->
+        <option value="Acura">Acura</option>
+        <option value="Alfa Romeo">Alfa Romeo</option>
+        <option value="Audi">Audi</option>
+        <option value="BMW">BMW</option>
+        <option value="Buick">Buick</option>
+        <option value="Cadillac">Cadillac</option>
+        <option value="Chevrolet">Chevrolet</option>
+        <option value="Chrysler">Chrysler</option>
+        <option value="Dodge">Dodge</option>
+        <option value="Ford">Ford</option>
+        <option value="Genesis">Genesis</option>
+        <option value="GMC">GMC</option>
+        <option value="Honda">Honda</option>
+        <option value="Hyundai">Hyundai</option>
+        <option value="Infiniti">Infiniti</option>
+        <option value="Jaguar">Jaguar</option>
+        <option value="Jeep">Jeep</option>
+        <option value="Kia">Kia</option>
+        <option value="Lexus">Lexus</option>
+        <option value="Lincoln">Lincoln</option>
+        <option value="Mazda">Mazda</option>
+        <option value="Mercedes-Benz">Mercedes-Benz</option>
+        <option value="Mini">Mini</option>
+        <option value="Nissan">Nissan</option>
+        <option value="Porsche">Porsche</option>
+        <option value="Ram">Ram</option>
+        <option value="Subaru">Subaru</option>
+        <option value="Toyota">Toyota</option>
+        <option value="Volkswagen">Volkswagen</option>
+        <option value="Volvo">Volvo</option>
+
+      </datalist>
+
+      <label for="model">Model:</label>
+      <input type="text" id="model" name="model" placeholder="Enter model name">
+
+      <!-- Year Fields (Min and Max) on the Same Level -->
+      <label for="minYear">Year:</label>
+      <div class="year-field-container">
+        <input type="number" id="minYear" name="minYear" placeholder="Min">
+        <input type="number" id="maxYear" name="maxYear" placeholder="Max">
+      </div>
+
+      <label for="part">Part:</label>
+      <input type="text" id="part" name="part" placeholder="Enter part name">
+
+      <button type="submit">Save Vehicle</button>
+    </form>
+
+    <!-- Display Stored Data -->
+    <div id="storedDataContainer">
+      <div id="storedData">
+        <!-- Stored items will be added here -->
+      </div>
+    </div>
+
+    <script>
+      document.getElementById("carFilterForm").addEventListener("submit", function(event) {
+        event.preventDefault(); // Prevent form from reloading the page
+
+        const formData = {
+          make: document.getElementById("make").value,
+          model: document.getElementById("model").value,
+          minYear: document.getElementById("minYear").value,
+          maxYear: document.getElementById("maxYear").value,
+          part: document.getElementById("part").value
+        };
+
+        // Create a new stored item
+        const newStoredItem = document.createElement("div");
+        newStoredItem.classList.add("stored-item");
+
+        // Combine data for the new stored item
+        newStoredItem.innerHTML = `
+          <div><span>${formData.minYear} - ${formData.make} ${formData.model}</span><span>${formData.part}</span></div>
+        `;
+
+        // Add the new item to the stored data container
+        document.getElementById("storedData").appendChild(newStoredItem);
+
+        // Optionally, clear the form after submitting
+        document.getElementById("carFilterForm").reset();
+      });
+    </script>
+  </body>
+</html>

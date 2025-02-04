@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Scavenger</title>
+    <link rel="stylesheet" href="../static/css/scavenger.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+
+</head>
+<body>
+
+   <!-- Navbar Section -->
+   <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+      <a class="navbar-brand" href="{{ url_for('index') }}">Part Hub</a>
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ml-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('index') }}">Home</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('hot_wheels') }}">Hot Wheels</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link active" href="{{ url_for('scavenger') }}">Scavengers</a>
+          </li>
+          <!-- Optionally add other pages if necessary -->
+          <li class="nav-item">
+            <a class="nav-link" href="#contact">Contact</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+    <div class="yard-box">
+        <h2>SLC Tear-A-Part</h2>
+    </div>
+    <div>
+        <p class="car-count"></p>
+    </div>
+    <div class="yard-box">
+        <h2>Pick-N-Pull</h2>
+    </div>
+    <div>
+        <p class="car-count"></p>
+    </div>
+    <div class="yard-box">
+        <h2>Pull-N-Save</h2>
+    </div>
+    <div>
+        <p class="car-count"></p>
+    </div>
+    <div class="yard-box">
+        <h2>OG Tear-A-Part</h2>
+    </div>
+    <div>
+        <p class="car-count"></p>
+    </div>
+
+</body>
+</html>

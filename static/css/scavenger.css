@@ -1,0 +1,77 @@
+body {
+  font-family: 'Arial', sans-serif;
+  background-color: #f4f4f9;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  line-height: 1.6;
+  text-align: center;
+}
+
+/* Header Styling */
+header {
+  background-color: #333;
+  color: white;
+  padding: 20px 0;  /* Vertical padding for spacing */
+  display: flex;
+  justify-content: space-between; /* Space out the left and right content */
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  position: relative;
+}
+
+/* Container for Part Hub and Hot Wheels (Left Side) */
+.header-left {
+  display: flex;
+  align-items: center;
+  margin-left: 20px; /* Add left margin for spacing */
+}
+
+/* Part Hub Title */
+.ph_title {
+  font-size: 2em;
+  color: white;
+  text-decoration: none;
+  transition: color 0.3s ease;
+  margin-right: auto;
+}
+
+.ph_title:hover {
+  color: #4781ff;
+}
+
+/* Hot Wheels Link */
+.hw_title {
+  font-size: 30px;
+  color: white;
+  text-decoration: none;
+  transition: color 0.3s ease;
+  font-family: 'Arial', sans-serif;
+  margin-left: 110px;
+}
+
+.hw_title:hover {
+  color: #ff6347;
+  text-decoration: none;
+}
+
+/* Scavenger Title (Center this title) */
+.scavenger_title {
+  font-weight: bold;
+  font-size: 2.5em;
+  color: white;
+  text-align: center;
+  position: absolute;  /* Centered regardless of other items */
+  left: 50%;
+  transform: translateX(-50%);  /* This will center it horizontally */
+}
+
+.yard-box {
+    width: 100%; /* Make the boxes take the full width of the container */
+    padding: 10px; /* Add some padding inside the box */
+    margin-bottom: 20px; /* Space between each box */
+    background-color: #f0f0f0; /* Light background color */
+    border: 1px solid #ccc; /* Border around each box */
+    box-sizing: border-box; /* Ensures padding doesn't affect the width */
+}

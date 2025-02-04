@@ -16,20 +16,23 @@ header {
   align-items: center;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   position: relative;
+  justify-content: space-between;  /* Ensure spacing between the titles */
 }
 
+/* Part Hub Title (Align left) */
 .ph_title {
   font-size: 2em;
   color: white;
   text-decoration: none;
   transition: color 0.3s ease;
-  margin-right: auto;
+  margin-right: auto;  /* Keep Part Hub aligned to the left */
 }
 
 .ph_title:hover {
-  color: #ff6347;
+  color: #4781ff;
 }
 
+/* Hot Wheels Title (Center this title in the header) */
 h1.hw_title {
   font-size: 2.2em;
   text-align: center;
@@ -37,6 +40,21 @@ h1.hw_title {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
+}
+
+/* Scavenger Title (Position this title to the right of Hot Wheels) */
+.scavenger_title {
+  font-size: 30px;
+  color: white;
+  text-decoration: none;
+  transition: color 0.3s ease;
+  position: absolute;
+  right: 20px;  /* Position Scavenger on the right */
+}
+
+.scavenger_title:hover {
+  color: #8aff47;
+  text-decoration: none;
 }
 
 /* Form Styles */
@@ -123,35 +141,38 @@ button:active {
 
 /* Stored Data Styling */
 #storedDataContainer {
-  margin-top: 30px;
+  margin-top: 20px;
   text-align: center;
+  margin-left: auto;
+  margin-right: auto; /* Center the container */
 }
 
 #storedData {
   display: flex;
   flex-direction: column; /* Stack items vertically */
   justify-content: center;
-  gap: 20px;
+  gap: 8px; /* Tight gap between items */
   width: 100%;
-  margin-top: 20px;
+  margin-top: 15px; /* Reduced top margin */
 }
 
 .stored-item {
   display: flex;
-  justify-content: space-between; /* Ensure horizontal layout for each entry */
+  justify-content: space-between;
   align-items: center;
-  font-size: 16px;
+  font-size: 12px; /* Small font size */
   background-color: #fff;
-  padding: 15px;
+  padding: 8px; /* Reduced padding */
   border-radius: 6px;
   border: 1px solid #ccc;
   text-align: center;
-  min-width: 200px;
+  width: 100%;
+  min-width: 100px; /* Reduced minimum width */
   margin: 0 auto; /* Center the items */
 }
 
 .stored-item > div {
-  flex: 1; /* Allow equal distribution of the space */
+  flex: 1;
   text-align: center;
 }
 
@@ -160,11 +181,7 @@ button:active {
 }
 
 .stored-item span {
-  padding: 0 10px; /* Space between values */
-}
-/* Modal styling */
-.modal-content {
-  padding: 20px;
+  padding: 0 6px; /* Reduced padding between values */
 }
 
 /* Responsive Design */

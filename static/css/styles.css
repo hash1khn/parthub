@@ -11,33 +11,56 @@ body {
 header {
     background-color: #333;
     color: white;
-    padding: 20px;
+    padding: 17.5px;
     display: flex;
     justify-content: center;
     align-items: center;
     position: relative;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding-right: 60px; /* Space to the right to fit both links */
 }
 
+/* Title and Links Container */
+.header-links {
+    display: flex;
+    align-items: center;
+    position: absolute;
+    right: 20px;  /* Distance from the right */
+}
+
+/* Part Hub Title */
 .ph_title {
-    font-size: 2.2em;
+    margin-left: 10px;
+    font-size: 2.5em;
     font-weight: bold;
     color: white;
     text-align: center;
 }
 
+/* Hot Wheels Link */
 .hw_title {
-    position: absolute;
-    right: 20px;
-    top: 20px;
     font-size: 30px;
     color: white;
     text-decoration: none;
     transition: color 0.3s ease;
     font-family: 'Arial', sans-serif; /* Specify font-family for hw_title */
+    margin-right: 130px; /* Space between Hot Wheels and the new link */
 }
 
 .hw_title:hover {
     color: #ff6347;
+    text-decoration: none;
+}
+
+/* New Third Link (example: 'New Link') */
+.scavenger_title {
+    font-size: 30px;
+    color: white;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.scavenger_title:hover {
+    color: #8aff47;
     text-decoration: none;
 }

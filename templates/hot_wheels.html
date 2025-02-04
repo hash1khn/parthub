@@ -4,25 +4,47 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hot Wheels - Part Hub</title>
-    <link rel="stylesheet" href="/static/css/styles2.css"> <!-- Link to the updated CSS -->
+    <link rel="stylesheet" href="/static/css/styles2.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
   </head>
   <body>
-    <!-- Header Section -->
-    <header>
-      <div class="header-left">
-        <!-- Update this link to use Flask's `url_for()` to navigate back to the homepage -->
-        <a class="ph_title" href="index.html">Part Hub</a>
+    <!-- Navbar Section -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+      <div class="container">
+        <a class="navbar-brand" href="{{ url_for('index') }}">Part Hub</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav ml-auto">
+            <li class="nav-item">
+              <a class="nav-link" href="{{ url_for('index') }}">Home</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{{ url_for('hot_wheels') }}">Hot Wheels</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{{ url_for('scavenger') }}">Scavengers</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#contact">Contact</a>
+            </li>
+          </ul>
+        </div>
       </div>
-      <h1 class="hw_title">Hot Wheels</h1>
-    </header>
+    </nav>
+
+    <!-- Hot Wheels Title -->
+    <div class="container mt-5">
+      <h4 class="text-center mb-4">Create a List of Hot Wheels</h4>
+    </div>
 
     <!-- Car Filter Form -->
-    <h2>Create a List of Hot Wheels</h2>
     <form id="carFilterForm">
       <label for="make">Make:</label>
       <input list="make-options" id="make" name="make" placeholder="Enter car make" autocomplete="on">
       <datalist id="make-options">
-        <!-- Car make options -->
+        <!-- Add options for make -->
         <option value="Acura">Acura</option>
         <option value="Alfa Romeo">Alfa Romeo</option>
         <option value="Audi">Audi</option>
@@ -54,12 +76,12 @@
         <option value="Volkswagen">Volkswagen</option>
         <option value="Volvo">Volvo</option>
 
+        <!-- Add more options as needed -->
       </datalist>
 
       <label for="model">Model:</label>
       <input type="text" id="model" name="model" placeholder="Enter model name">
 
-      <!-- Year Fields (Min and Max) on the Same Level -->
       <label for="minYear">Year:</label>
       <div class="year-field-container">
         <input type="number" id="minYear" name="minYear" placeholder="Min">
@@ -72,40 +94,71 @@
       <button type="submit">Save Vehicle</button>
     </form>
 
-    <!-- Display Stored Data -->
-    <div id="storedDataContainer">
-      <div id="storedData">
-        <!-- Stored items will be added here -->
+    <!-- Search Bar Section -->
+    <div class="container mt-5">
+      <h4>Search Saved Vehicles</h4>
+      <div class="d-flex">
+        <input type="text" id="searchBar" class="form-control" placeholder="Search by make, model, or part" oninput="searchVehicles()">
+        <button id="searchButton" class="btn btn-primary ml-2" onclick="searchVehicles()">Search</button>
+        <button id="clearButton" class="btn btn-secondary ml-2" onclick="clearSearch()">Clear</button>
       </div>
     </div>
 
-    <script>
-      document.getElementById("carFilterForm").addEventListener("submit", function(event) {
-        event.preventDefault(); // Prevent form from reloading the page
+    <!-- Display Saved Vehicles -->
+    <h2>Saved Vehicles</h2>
+    <div id="storedDataContainer">
+      <div id="storedData"></div>
+    </div>
+    <!-- Edit Vehicle Modal -->
+<div class="modal fade" id="editVehicleModal" tabindex="-1" role="dialog" aria-labelledby="editVehicleModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="editVehicleModalLabel">Edit Vehicle</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="editVehicleForm">
+          <input type="hidden" id="editVehicleId" name="id" />
+          
+          <div class="form-group">
+            <label for="editMake">Make</label>
+            <input type="text" class="form-control" id="editMake" name="make" required />
+          </div>
 
-        const formData = {
-          make: document.getElementById("make").value,
-          model: document.getElementById("model").value,
-          minYear: document.getElementById("minYear").value,
-          maxYear: document.getElementById("maxYear").value,
-          part: document.getElementById("part").value
-        };
+          <div class="form-group">
+            <label for="editModel">Model</label>
+            <input type="text" class="form-control" id="editModel" name="model" required />
+          </div>
 
-        // Create a new stored item
-        const newStoredItem = document.createElement("div");
-        newStoredItem.classList.add("stored-item");
+          <div class="form-group">
+            <label for="editMinYear">Min Year</label>
+            <input type="number" class="form-control" id="editMinYear" name="minYear" required />
+          </div>
 
-        // Combine data for the new stored item
-        newStoredItem.innerHTML = `
-          <div><span>${formData.minYear} - ${formData.make} ${formData.model}</span><span>${formData.part}</span></div>
-        `;
+          <div class="form-group">
+            <label for="editMaxYear">Max Year</label>
+            <input type="number" class="form-control" id="editMaxYear" name="maxYear" required />
+          </div>
 
-        // Add the new item to the stored data container
-        document.getElementById("storedData").appendChild(newStoredItem);
+          <div class="form-group">
+            <label for="editPart">Part</label>
+            <input type="text" class="form-control" id="editPart" name="part" required />
+          </div>
 
-        // Optionally, clear the form after submitting
-        document.getElementById("carFilterForm").reset();
-      });
-    </script>
+          <button type="submit" class="btn btn-primary">Save Changes</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+    <script src="static/js/scripts.js"></script>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+
   </body>
 </html>

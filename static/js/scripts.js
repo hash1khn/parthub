@@ -19,8 +19,10 @@ function displaySavedVehicles(vehicles) {
       <div>
         <span>${vehicle.minYear || ''} - ${vehicle.maxYear || ''} ${vehicle.make} ${vehicle.model}</span>
         <span>Part: ${vehicle.part}</span>
-        <button onclick="editVehicle(${vehicle.id})">Edit</button>
-        <button onclick="deleteVehicle(${vehicle.id})">Delete</button>
+        <button class="edit-btn" onclick="editVehicle(${vehicle.id})">
+        <img src="/static/assets/editbutton.jpg" alt="edit"></button>
+        <button class="delete-btn" onclick="deleteVehicle(${vehicle.id})">
+        <img src="/static/assets/deletebutton.png" alt="delete"></button>
       </div>
     `;
     storedData.appendChild(item);
@@ -58,7 +60,7 @@ async function deleteVehicle(id) {
 // Edit an existing vehicle's details
 async function editVehicle(id) {
   const vehicle = savedVehicles.find(v => v.id === id); // Find vehicle by id
-  
+
   // Populate the modal with the current vehicle data
   document.getElementById("editVehicleId").value = vehicle.id;
   document.getElementById("editMake").value = vehicle.make;

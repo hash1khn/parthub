@@ -68,6 +68,23 @@ document.getElementById("searchInput").addEventListener("keypress", function(eve
         searchCars();  // Trigger the search when Enter is pressed
     }
 });
+async function refreshDatabase() {
+    document.getElementById("statusMessage").innerHTML = "Refreshing database... Please wait.";
+
+    try {
+        const response = await fetch("/api/refresh_database", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+        });
+
+        const data = await response.json();
+        document.getElementById("statusMessage").innerHTML = data.message;
+        fetchUpdatedData(); // Reload updated data
+    } catch (error) {
+        console.error("Error refreshing database:", error);
+        document.getElementById("statusMessage").innerHTML = "Error updating database.";
+    }
+}
 
 // Ensure that the original car listings are saved when the page is loaded
 window.addEventListener('load', function() {

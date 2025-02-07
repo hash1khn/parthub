@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, jsonify, url_for
 from flask_sqlalchemy import SQLAlchemy
 from flask_mail import Mail, Message
-from apscheduler.schedulers.background import BackgroundScheduler
+#from apscheduler.schedulers.background import BackgroundScheduler
 from datetime import datetime, timedelta
 import pandas as pd
 from PNP import scrape_pnp
@@ -48,62 +48,82 @@ class SavedVehicle(db.Model):
     max_year = db.Column(db.String(4))
     part = db.Column(db.String(100))
 
-# Function to scrape and update the database
+# **Updated Function: Scrape and Update Database**
 def update_database():
-    print("Running background database update...")
-    
-    # Scrape data from all sources
-    pnp_data = scrape_pnp()
-    ogpap_data = scrape_ogpap()
-    tap_data = scrape_tap()
+    """Fetches new data from scraping sources and updates the database."""
+    try:
+        print("Running manual database update...")
 
-    # Combine data into a single DataFrame
-    columns = ["Year", "Make", "Model", "Row", "Date", "Yard"]
-    pnp_df = pd.DataFrame(pnp_data, columns=columns)
-    ogpap_df = pd.DataFrame(ogpap_data, columns=columns)
-    tap_df = pd.DataFrame(tap_data, columns=columns)
-    combined_df = pd.concat([pnp_df, ogpap_df, tap_df], ignore_index=True)
+        # Scrape data from all sources
+        pnp_data = scrape_pnp()
+        ogpap_data = scrape_ogpap()
+        tap_data = scrape_tap()
 
-    # Convert 'Date' column to datetime
-    combined_df['Date'] = pd.to_datetime(combined_df['Date'], format='%m/%d/%y', errors='coerce')
+        # Combine data into a DataFrame
+        columns = ["Year", "Make", "Model", "Row", "Date", "Yard"]
+        pnp_df = pd.DataFrame(pnp_data, columns=columns)
+        ogpap_df = pd.DataFrame(ogpap_data, columns=columns)
+        tap_df = pd.DataFrame(tap_data, columns=columns)
+        combined_df = pd.concat([pnp_df, ogpap_df, tap_df], ignore_index=True)
 
-    # Delete old cars (older than 15 days)
-    fifteen_days_ago = datetime.today().date() - timedelta(days=15)
-    
-    with app.app_context():
-        Car.query.filter(Car.date < fifteen_days_ago).delete()
+        # Convert 'Date' column to datetime format
+        combined_df['Date'] = pd.to_datetime(combined_df['Date'], format='%m/%d/%y', errors='coerce')
 
-        # Add new cars to the database
-        for _, row in combined_df.iterrows():
-            car = Car(
-                year=row['Year'],
-                make=row['Make'],
-                model=row['Model'],
-                row=row['Row'],
-                date=row['Date'].date(),
-                yard=row['Yard']
-            )
-            db.session.add(car)
+        # Remove old cars (older than 15 days)
+        fifteen_days_ago = datetime.today().date() - timedelta(days=15)
+        
+        with app.app_context():
+            Car.query.filter(Car.date < fifteen_days_ago).delete()
 
-        db.session.commit()
-    print(f"Database updated successfully at {datetime.now()}")
+            # Insert new scraped data
+            for _, row in combined_df.iterrows():
+                car = Car(
+                    year=row['Year'],
+                    make=row['Make'],
+                    model=row['Model'],
+                    row=row['Row'],
+                    date=row['Date'].date(),
+                    yard=row['Yard']
+                )
+                db.session.add(car)
+
+            db.session.commit()
+
+        print(f"✅ Database updated successfully at {datetime.now()}")
+        return {"success": True, "message": "Database refreshed successfully!"}
+
+    except Exception as e:
+        print(f"❌ Error updating database: {str(e)}")
+        return {"success": False, "message": f"Error updating database: {str(e)}"}
 
 # Route: Home Page (Car Listings)
 @app.route('/')
 def index():
     fifteen_days_ago = datetime.today().date() - timedelta(days=15)
-    recent_cars = Car.query.filter(Car.date >= fifteen_days_ago).all()
+    
+    # Fetch recent cars, sorted by date (newest first)
+    recent_cars = Car.query.filter(Car.date >= fifteen_days_ago).order_by(Car.date.desc()).all()
 
+    # Convert to list for display
     data = [
         {'Year': car.year, 'Make': car.make, 'Model': car.model, 'Row': car.row, 
          'Date': car.date.strftime('%Y-%m-%d'), 'Yard': car.yard}
         for car in recent_cars
     ]
 
+    # Convert to DataFrame for HTML table rendering
     df = pd.DataFrame(data)
     table_html = df.to_html(classes="table table-striped") if not df.empty else "<p>No data available</p>"
     
     return render_template("index.html", table_html=table_html)
+
+
+# **NEW API: Manual Database Refresh**
+@app.route('/api/refresh_database', methods=['POST'])
+def refresh_database():
+    """Manually refresh the database by scraping new data."""
+    result = update_database()
+    return jsonify(result), 200 if result["success"] else 500
 
 # Route: Hot Wheels Page (User-saved cars)
 @app.route('/hot_wheels')
@@ -332,20 +352,18 @@ def send_hotwheels_email():
 
 
 # Scheduler setup to update the database every 24 hours
-scheduler = BackgroundScheduler()
-scheduler.add_job(func=update_database, trigger="interval", days=1)
-scheduler.add_job(func=send_hotwheels_email, trigger="cron", hour=8, minute=0)  
+#scheduler = BackgroundScheduler()
+#scheduler.add_job(func=update_database, trigger="interval", days=1)
+#scheduler.add_job(func=send_hotwheels_email, trigger="cron", hour=8, minute=0)
 
-scheduler.start()
+#scheduler.start()
 
 # Ensure the scheduler stops on app exit
-import atexit
-atexit.register(lambda: scheduler.shutdown())
+#import atexit
+#atexit.register(lambda: scheduler.shutdown())
 
 # Run the application
 if __name__ == "__main__":
     with app.app_context():
-        db.create_all()  # Create database tables if they don't exist
-        if not Car.query.first():  # Only scrape if the database is empty
-            update_database()
+        db.create_all()  # Create tables if they don't exist
     app.run(debug=True)

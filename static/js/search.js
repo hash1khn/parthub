@@ -69,7 +69,8 @@ document.getElementById("searchInput").addEventListener("keypress", function(eve
     }
 });
 async function refreshDatabase() {
-    document.getElementById("statusMessage").innerHTML = "Refreshing database... Please wait.";
+    const statusMessage = document.getElementById("statusMessage");
+    statusMessage.innerHTML = "🔄 Refreshing database... Please wait.";
 
     try {
         const response = await fetch("/api/refresh_database", {
@@ -78,13 +79,21 @@ async function refreshDatabase() {
         });
 
         const data = await response.json();
-        document.getElementById("statusMessage").innerHTML = data.message;
-        fetchUpdatedData(); // Reload updated data
+
+        // Ensure response contains success flag
+        if (data.success) {
+            statusMessage.innerHTML = `✅ ${data.message}`;
+            fetchUpdatedData(); // Reload updated data
+        } else {
+            statusMessage.innerHTML = `⚠️ ${data.message}`; // Show "No new cars available"
+        }
     } catch (error) {
-        console.error("Error refreshing database:", error);
-        document.getElementById("statusMessage").innerHTML = "Error updating database.";
+        console.error("❌ Error refreshing database:", error);
+        statusMessage.innerHTML = "❌ Error updating database. Please try again.";
     }
 }
+
+
 
 // Ensure that the original car listings are saved when the page is loaded
 window.addEventListener('load', function() {

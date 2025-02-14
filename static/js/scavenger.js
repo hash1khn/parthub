@@ -20,8 +20,6 @@ function fetchYardData(filterDays) {
         .catch(error => console.error("Error fetching yards:", error));
 }
 
-
-
 // Function to render yards dynamically
 function renderYards(yardsData, expandedYards) {
     const scavengerContainer = document.getElementById("scavengerContainer");
@@ -45,52 +43,72 @@ function renderYards(yardsData, expandedYards) {
 
         // Create Vehicle Rows
         const vehiclesList = document.getElementById(`yard-${yardName}`);
+        yard.vehicles.forEach(([rowNumber, cars]) => {
+            cars.forEach((vehicle) => {
+                console.log("checkinggg",vehicle)
+                const vehicleRow = document.createElement("div");
+                vehicleRow.classList.add("vehicle-row");
 
-        yard.vehicles.forEach((vehicle) => {
-            const vehicleRow = document.createElement("div");
-            vehicleRow.classList.add("vehicle-row");
+                // Apply completed styling
+                if (vehicle.completed) {
+                    vehicleRow.classList.add("completed");
+                }
 
-            // Apply completed styling
-            if (vehicle.completed) {
-                vehicleRow.classList.add("completed");
-            }
-
-            vehicleRow.innerHTML = `
-                <span class="vehicle-row-number">Row: ${vehicle.row}</span>
-                <span class="vehicle-models">${vehicle.years.join(", ")} ${vehicle.models}</span>
-                <input 
-                    type="checkbox" 
-                    class="vehicle-checkbox" 
-                    ${vehicle.completed ? "checked" : ""}  
-                    onchange="toggleRowCompletion('${yardName}', ${vehicle.row}, this.checked)"
-                />
-            `;
-            vehiclesList.appendChild(vehicleRow);
+                vehicleRow.innerHTML = `
+                    <span class="vehicle-row-number">Row: ${vehicle.row}</span>
+                    <span class="vehicle-models">${vehicle.year} ${vehicle.make} ${vehicle.model}</span>
+                    <input 
+                        type="checkbox" 
+                        class="vehicle-checkbox" 
+                        ${vehicle.completed ? "checked" : ""}  
+onchange="toggleRowCompletion('${yardName}', ${vehicle.row}, '${vehicle.make}', '${vehicle.model}', ${vehicle.year}, this.checked)"
+                    />
+                `;
+                vehiclesList.appendChild(vehicleRow);
+            });
         });
     });
 }
 
+// Function to toggle row completion (now checks by row & year)
+function toggleRowCompletion(yard, row, make, model, year, isChecked) {
+    console.log("DEBUG: ", { yard, row, make, model, year, isChecked });
 
+    if (!yard || !row || !make || !model || !year) {
+        console.error("❌ ERROR: Missing parameters in toggleRowCompletion.");
+        return;
+    }
 
+    // Encode parameters to ensure they are URL-safe
+    let encodedYard = encodeURIComponent(yard);
+    let encodedMake = encodeURIComponent(make);
+    let encodedModel = encodeURIComponent(model);
+    let encodedRow = encodeURIComponent(row);
+    let encodedYear = encodeURIComponent(year);
 
-// Function to toggle row completion
-function toggleRowCompletion(yard, row, isChecked) {
-    fetch(`/api/scavenger_yards/${yard}/rows/${row}`, {
+    fetch(`/api/scavenger_yards/${encodedYard}/rows/${encodedRow}/vehicles/${encodedMake}/${encodedModel}/${encodedYear}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ completed: isChecked })
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`Server responded with ${response.status}`);
+        }
+        return response.json();
+    })
     .then(data => {
-        console.log("Updated Row:", data);
+        console.log("✅ Updated Vehicle:", data);
 
         // Find the checkbox and update its state dynamically
         document.querySelectorAll(".vehicle-row").forEach(rowElement => {
-            if (rowElement.querySelector(".vehicle-row-number").innerText.includes(row)) {
+            let rowNumber = rowElement.querySelector(".vehicle-row-number").innerText;
+            let modelInfo = rowElement.querySelector(".vehicle-models").innerText;
+
+            if (rowNumber.includes(row) && modelInfo.includes(`${year} ${make} ${model}`)) {
                 let checkbox = rowElement.querySelector(".vehicle-checkbox");
                 checkbox.checked = data.completed;
 
-                // Apply strikethrough styling if completed
                 if (data.completed) {
                     rowElement.classList.add("completed");
                 } else {
@@ -99,8 +117,10 @@ function toggleRowCompletion(yard, row, isChecked) {
             }
         });
     })
-    .catch(error => console.error("Error updating row:", error));
+    .catch(error => console.error("❌ Error updating vehicle:", error));
 }
+
+
 
 
 

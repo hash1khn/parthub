@@ -7,6 +7,11 @@ import pandas as pd
 from PNP import scrape_pnp
 from OGPAP import scrape_ogpap
 from TAP import scrape_tap
+from sqlalchemy import func
+from flask import jsonify
+from collections import defaultdict
+
+
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -18,12 +23,12 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
 # Email Configuration
-app.config['MAIL_SERVER'] = 'smtp.your-email-provider.com'
+app.config['MAIL_SERVER'] = 'smtp-relay.brevo.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = 'your-email@example.com'
-app.config['MAIL_PASSWORD'] = 'your-email-password'
-app.config['MAIL_DEFAULT_SENDER'] = 'your-email@example.com'
+app.config['MAIL_USERNAME'] = '859985001@smtp-brevo.com'
+app.config['MAIL_PASSWORD'] = '4Eg6K1w0xfnbdWr7'
+app.config['MAIL_DEFAULT_SENDER'] = 'hashirahmedkhan123@gmail.com'
 
 mail = Mail(app)
 
@@ -50,51 +55,75 @@ class SavedVehicle(db.Model):
 
 # **Updated Function: Scrape and Update Database**
 def update_database():
-    """Fetches new data from scraping sources and updates the database."""
+    """Fetches new data from scraping sources and updates the database while avoiding duplicates."""
     try:
-        print("Running manual database update...")
+        print("🔄 Running manual database update...")
 
         # Scrape data from all sources
+        print("🔍 Scraping PNP data...")
         pnp_data = scrape_pnp()
+        print("✅ Scraped", len(pnp_data), "cars from PNP.")
+
+        print("🔍 Scraping OG PAP data...")
         ogpap_data = scrape_ogpap()
+        print("✅ Scraped", len(ogpap_data), "cars from OG PAP.")
+
+        print("🔍 Scraping TAP data...")
         tap_data = scrape_tap()
+        print("✅ Scraped", len(tap_data), "cars from TAP.")
 
         # Combine data into a DataFrame
         columns = ["Year", "Make", "Model", "Row", "Date", "Yard"]
-        pnp_df = pd.DataFrame(pnp_data, columns=columns)
-        ogpap_df = pd.DataFrame(ogpap_data, columns=columns)
-        tap_df = pd.DataFrame(tap_data, columns=columns)
-        combined_df = pd.concat([pnp_df, ogpap_df, tap_df], ignore_index=True)
+        combined_df = pd.concat([
+            pd.DataFrame(pnp_data, columns=columns),
+            pd.DataFrame(ogpap_data, columns=columns),
+            pd.DataFrame(tap_data, columns=columns)
+        ], ignore_index=True)
 
         # Convert 'Date' column to datetime format
         combined_df['Date'] = pd.to_datetime(combined_df['Date'], format='%m/%d/%y', errors='coerce')
 
         # Remove old cars (older than 15 days)
         fifteen_days_ago = datetime.today().date() - timedelta(days=15)
-        
+
         with app.app_context():
-            Car.query.filter(Car.date < fifteen_days_ago).delete()
+            print("🗑️ Removing cars older than 15 days...")
+            db.session.query(Car).filter(Car.date < fifteen_days_ago).delete()
 
-            # Insert new scraped data
+            # Get all existing cars in the database to prevent duplicates
+            existing_cars = set(
+                (car.year, car.make.lower(), car.model.lower(), car.row, car.yard, car.date)
+                for car in Car.query.all()
+            )
+
+            new_cars = []
             for _, row in combined_df.iterrows():
-                car = Car(
-                    year=row['Year'],
-                    make=row['Make'],
-                    model=row['Model'],
-                    row=row['Row'],
-                    date=row['Date'].date(),
-                    yard=row['Yard']
-                )
-                db.session.add(car)
+                car_tuple = (row['Year'], row['Make'].lower(), row['Model'].lower(), row['Row'], row['Yard'], row['Date'].date())
 
-            db.session.commit()
+                if car_tuple not in existing_cars:  # Avoid inserting duplicates
+                    new_cars.append(Car(
+                        year=row['Year'],
+                        make=row['Make'],
+                        model=row['Model'],
+                        row=row['Row'],
+                        date=row['Date'].date(),
+                        yard=row['Yard']
+                    ))
+                    existing_cars.add(car_tuple)  # Add to the set to prevent further duplicates
 
-        print(f"✅ Database updated successfully at {datetime.now()}")
-        return {"success": True, "message": "Database refreshed successfully!"}
+            if new_cars:
+                db.session.bulk_save_objects(new_cars)  # Faster batch insertion
+                db.session.commit()
+                print(f"✅ {len(new_cars)} new cars added to the database!")
+                return {"success": True, "message": f"{len(new_cars)} new cars added"}
+            else:
+                print("✅ No new cars found. Database is already up to date.")
+                return {"success": False, "message": "No new cars available"}
 
     except Exception as e:
         print(f"❌ Error updating database: {str(e)}")
         return {"success": False, "message": f"Error updating database: {str(e)}"}
+
 
 # Route: Home Page (Car Listings)
 @app.route('/')
@@ -135,11 +164,54 @@ def hot_wheels():
 def scavenger():
     return render_template('scavenger.html')
 
+@app.route('/api/remove_duplicates', methods=['DELETE'])
+def remove_duplicates():
+    """Find and remove duplicate car records from the database."""
+    print("🔍 Checking for duplicate entries in the database...")
+
+    try:
+        # Identify duplicate cars based on (year, make, model, row, yard, date)
+        duplicates = db.session.query(
+            Car.year, Car.make, Car.model, Car.row, Car.yard, Car.date,
+            db.func.count().label("count")
+        ).group_by(Car.year, Car.make, Car.model, Car.row, Car.yard, Car.date).having(db.func.count() > 1).all()
+
+        if not duplicates:
+            print("✅ No duplicates found in the database.")
+            return jsonify({"success": False, "message": "No duplicates found"}), 200
+
+        total_deleted = 0
+        for duplicate in duplicates:
+            year, make, model, row, yard, date, count = duplicate
+
+            # Get all duplicate records
+            duplicate_records = Car.query.filter_by(
+                year=year, make=make, model=model, row=row, yard=yard, date=date
+            ).all()
+
+            # Keep only one record, delete the rest
+            for car in duplicate_records[1:]:  # Skip the first record
+                db.session.delete(car)
+                total_deleted += 1
+
+        # Commit changes
+        db.session.commit()
+
+        print(f"✅ {total_deleted} duplicate records deleted.")
+        return jsonify({"success": True, "message": f"{total_deleted} duplicate cars removed"}), 200
+
+    except Exception as e:
+        print(f"❌ ERROR removing duplicates: {e}")
+        return jsonify({"success": False, "message": "Error removing duplicates"}), 500
+
+
 # API: Fetch Scavenger Yards
 # API: Fetch filtered Hot Wheels for Scavenger Page
+
 @app.route('/api/scavenger_filtered', methods=['GET'])
 def get_scavenger_filtered():
-    """Filter Part Hub database cars using the Hot Wheels list and group them by row, including min/max year."""
+    """Filter Part Hub database cars using the Hot Wheels list and group them by row, ensuring no duplicate years."""
+    
     days_filter = request.args.get('days', 'all')  
     today = datetime.today().date()
 
@@ -155,10 +227,12 @@ def get_scavenger_filtered():
     
     # Convert list to dictionary for easy lookup
     hot_wheels_dict = {
-        (v.make.lower(), v.model.lower()): (v.min_year, v.max_year) for v in hot_wheels
+        (v.make.lower(), v.model.lower()): (int(v.min_year) if v.min_year and v.min_year.isdigit() else None,
+                                            int(v.max_year) if v.max_year and v.max_year.isdigit() else None)
+        for v in hot_wheels
     }
 
-    # Fetch cars and filter by Hot Wheels list and year range
+    # Fetch cars and apply date filtering
     query = Car.query
     if filter_date:
         query = query.filter(Car.date >= filter_date)
@@ -166,72 +240,110 @@ def get_scavenger_filtered():
     filtered_cars = query.all()
 
     # Group by Yard & Row
-    yard_data = {}
+    yard_data = defaultdict(lambda: {"hotWheelsCount": 0, "vehicles": defaultdict(list)})
+
     for car in filtered_cars:
         car_key = (car.make.lower(), car.model.lower())
 
         # Check if the car is in the Hot Wheels list
         if car_key in hot_wheels_dict:
             min_year, max_year = hot_wheels_dict[car_key]
-
-            # Convert min/max year to int if not None
-            min_year = int(min_year) if min_year and min_year.isdigit() else None
-            max_year = int(max_year) if max_year and max_year.isdigit() else None
             car_year = int(car.year)
 
-            # Ensure the car year falls within the range
+            # Ensure the car year falls within the valid range
             if (min_year is None or car_year >= min_year) and (max_year is None or car_year <= max_year):
 
-                if car.yard not in yard_data:
-                    yard_data[car.yard] = {"hotWheelsCount": 0, "vehicles": {}}
+                row = str(car.row)  # Convert row to string to avoid mismatches
+                vehicle_key = f"{car.make}-{car.model}-{car.year}"  # Unique key to prevent duplicates
 
-                if car.row not in yard_data[car.yard]["vehicles"]:
-                    yard_data[car.yard]["vehicles"][car.row] = {
-                        "row": car.row,
-                        "models": f"{car.make} {car.model}",
-                        "completed": False,
-                        "years": []
-                    }
+                # Ensure unique entries per row
+                if vehicle_key not in {f"{v['make']}-{v['model']}-{v['year']}" for v in yard_data[car.yard]["vehicles"][row]}:
+                    yard_data[car.yard]["vehicles"][row].append({
+                        "row": row,
+                        "make": car.make,
+                        "model": car.model,
+                        "year": car.year,
+                        "completed": car.completed
+                    })
 
-                # Add car's year if it matches the filter
-                yard_data[car.yard]["vehicles"][car.row]["years"].append(car.year)
-                yard_data[car.yard]["hotWheelsCount"] += 1
+                    # **Increment hotWheelsCount only once per unique vehicle**
+                    yard_data[car.yard]["hotWheelsCount"] += 1
 
-    # Convert row data to list and sort by row number
-    for yard in yard_data:
-        yard_data[yard]["vehicles"] = sorted(yard_data[yard]["vehicles"].values(), key=lambda x: int(x["row"]))
+    # Convert defaultdicts back to normal dicts and sort rows numerically
+    final_data = {yard: {"hotWheelsCount": data["hotWheelsCount"], "vehicles": sorted(data["vehicles"].items(), key=lambda x: int(x[0]))} for yard, data in yard_data.items()}
 
-    return jsonify(yard_data)
+    return jsonify(final_data)
 
 
-@app.route('/api/scavenger_yards/<yard>/rows/<row>', methods=['PUT'])
-def update_row_completion(yard, row):
-    """Marks a row in a specific yard as completed."""
+
+
+
+
+@app.route('/api/completed_status', methods=['GET'])
+def get_completed_status():
+    completed_count = Car.query.filter_by(completed=True).count()
+    incomplete_count = Car.query.filter_by(completed=False).count()
+
+    return jsonify({
+        "completed_cars": completed_count,
+        "incomplete_cars": incomplete_count
+    })
+
+@app.route('/api/scavenger_yards/<yard>/rows/<row>/vehicles/<make>/<model>/<year>', methods=['PUT'])
+def update_vehicle_completion(yard, row, make, model, year):
+    """Marks a specific vehicle (make, model, and year) in a yard row as completed."""
     data = request.get_json()
     completed_status = data.get('completed', False)
 
-    # Convert row to integer if necessary (in case database stores row as int)
     try:
         row = int(row)
+        year = int(year)
     except ValueError:
-        return jsonify({"error": "Invalid row number"}), 400  # Return error if row is not a valid integer
+        return jsonify({"error": "Invalid row or year number"}), 400
 
-    # Fetch the car that matches the given yard and row
-    car = Car.query.filter_by(yard=yard, row=row).first()
+    # Decode encoded URL parameters
+    yard = yard.replace("%20", " ")  # Handle spaces in yard names
+    make = make.replace("%20", " ")
+    model = model.replace("%20", " ")
+
+    # Debugging: Print received parameters
+    print(f"Updating Vehicle: Yard={yard}, Row={row}, Make={make}, Model={model}, Year={year}, Completed={completed_status}")
+
+    # Fetch the specific car
+    car = Car.query.filter(
+        Car.yard.ilike(yard),  # Case-insensitive matching
+        Car.row == row,
+        func.lower(Car.make) == make.lower(),
+        func.lower(Car.model) == model.lower(),
+        Car.year == year
+    ).first()
+
     if not car:
-        return jsonify({"error": f"Row {row} not found in yard {yard}"}), 404
+        return jsonify({"error": f"No matching car found in row {row} of yard {yard}"}), 404
 
-    # Update the completion status
+    # Update completion status
     car.completed = completed_status
     db.session.commit()
 
-    # Return the updated row so the frontend stays in sync
     return jsonify({
-        "message": f"Row {row} in {yard} updated.",
+        "message": f"✅ Updated: {year} {make} {model} in row {row} of {yard}",
         "yard": yard,
         "row": row,
-        "completed": car.completed  # Return updated completed status
+        "make": make,
+        "model": model,
+        "year": year,
+        "completed": completed_status
     })
+
+
+
+
+
+
+
+
+
+
 
 # API: Fetch saved vehicles
 @app.route('/api/saved_vehicles', methods=['GET'])
@@ -331,24 +443,44 @@ def search_cars():
     ]
 
     return jsonify(car_list)
-
+@app.route('/send_hotwheels_email', methods=['POST'])
 def send_hotwheels_email():
-    """Sends a daily email with the Hot Wheels report."""
-    with app.app_context():
-        response = get_scavenger_filtered()
-        yards_data = response.get_json()
+    """Sends a daily email with the Hot Wheels report via Brevo SMTP."""
+    try:
+        # Fetch the latest Hot Wheels data
+        with app.app_context():
+            response = get_scavenger_filtered()
+            yards_data = response.get_json()  # Convert Response to JSON
 
-        email_body = "Hot Wheels Report for Today:\n\n"
+        # Generate email content
+        email_body = "<h2>Hot Wheels Report for Today</h2><ul>"
+
         for yard, details in yards_data.items():
-            email_body += f"{yard} ({details['hotWheelsCount']} Hot Wheels):\n"
-            for car in details["vehicles"]:
-                email_body += f"  - {car['year']} {car['make']} {car['model']} (Row {car['row']})\n"
-            email_body += "\n"
+            email_body += f"<li><b>{yard} ({details['hotWheelsCount']} Hot Wheels)</b></li><ul>"
 
-        msg = Message("Daily Hot Wheels Report", recipients=["your-email@example.com"])
-        msg.body = email_body
+            for row_number, vehicles in details["vehicles"]:  # Row-wise grouping
+                for car in vehicles:  # Loop through cars in each row
+                    email_body += f"<li>{car['year']} {car['make']} {car['model']} (Row {row_number})</li>"
+
+            email_body += "</ul>"
+
+        email_body += "</ul>"
+
+        # Create the email message
+        msg = Message(
+            subject="Daily Hot Wheels Report",
+            recipients=["justbrown5678@gmail.com"],  # Replace with actual recipient
+            html=email_body
+        )
+
+        # Send email using Flask-Mail
         mail.send(msg)
-        print("Daily Hot Wheels Email Sent")
+
+        return jsonify({"success": True, "message": "Hot Wheels email sent successfully!"}), 200
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
 
 
 # Scheduler setup to update the database every 24 hours
@@ -367,3 +499,4 @@ if __name__ == "__main__":
     with app.app_context():
         db.create_all()  # Create tables if they don't exist
     app.run(debug=True)
+    

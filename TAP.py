@@ -13,7 +13,7 @@ def scrape_tap():
 
     # Function to scrape car data from the page
     def scrape_page():
-        wait = WebDriverWait(driver, 10)
+        wait = WebDriverWait(driver, 30)
         rows = wait.until(lambda d: d.find_elements(By.XPATH, "//div[@class='carWrapper']"))
 
         car_list = []

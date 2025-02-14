@@ -74,8 +74,4 @@
 The application is deployed on PythonAnywhere, ensuring continuous operation and automated database updates without relying on your local machine.
 
 ### 📧 Contact
-For any questions or feedback, please open an issue in the repository or contact me at [your email].
-
----
-
-This README gives a clear overview of your project. Let me know if you need any adjustments or additions! 🚀
+For any questions or feedback, please open an issue in the repository or contact me at hashirahmedkhan123@gmail.com
